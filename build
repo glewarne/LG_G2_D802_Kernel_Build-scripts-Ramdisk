@@ -1,0 +1,95 @@
+#!/bin/bash
+clear
+
+
+# What you need installed to compile
+# gcc, gpp, cpp, c++, g++, lzma, lzop, xterm, ia32-libs
+
+# What you need to make configuration easier by using xconfig
+# qt4-dev, qmake-qt4, pkg-config
+
+# Setting the toolchain
+# download the google gcc 4.7 (or similar) arm-eabi- toolchain and edit
+# the kernel/Makefile CROSS_COMPILE variable to match the download location of the
+# bin/ folder of your toolchain
+
+# Structure for building and using this script
+
+#--project/                 (progect container folder)
+#------build                (this script)
+#------kernel/              (kernel source goes here)
+#------ramdisk/             (ramdisk files for boot.img)
+#------output/              (output directory, where the final boot.img and modules are placed)
+#----------meta-inf/        (meta-inf folder for your flashable zip)
+#----------system/
+#-------------lib/
+#---------------modules/    (kernel modules are automatically placed here)
+
+
+# begin by ensuring the required directory structure is complete, and empty
+echo
+echo "Initialising................."
+rm -rf lib
+rm -rf output/system/lib/modules
+rm -rf output/boot
+rm -f output/*.zip
+rm -f output/*.img
+mkdir -p output/system/lib/modules
+mkdir -p output/boot
+
+#force regeneration of .dtb and zImage files for every compile
+rm -f kernel/arch/arm/boot/*.dtb
+rm -f kernel/arch/arm/boot/*.cmd
+rm -f kernel/arch/arm/boot/zImage
+rm -f kernel/arch/arm/boot/Image
+
+# move into the kernel directory and compile the main image
+echo "Compiling Kernel............."
+cd kernel
+xterm -e make -j4
+
+# compile the modules, and depmod to create the final zImage
+echo "Compiling Modules............"
+xterm -e make INSTALL_MOD_PATH=.. modules_install
+
+# move the compiled zImage and modules into the output working directory
+echo "Move compiled objects........"
+cp arch/arm/boot/zImage ../output/boot						2>/dev/null
+find -name '*.ko' -exec cp -av {} ../output/system/lib/modules/ \; 		>/dev/null
+
+# create the ramdisk and move it to the output working directory
+echo "Create ramdisk..............."
+./scripts/mkbootfs ../ramdisk | gzip > ramdisk.gz				2>/dev/null
+mv ramdisk.gz ../output/boot							2>/dev/null
+
+# create the dt.img from the compiled device files, necessary for msm8974 boot images
+echo "Create dt.img................"
+echo
+./scripts/dtbTool -v -s 2048 -o ../output/boot/dt.img arch/arm/boot/
+echo
+
+# build the final boot.img ready for inclusion in flashable zip
+echo "Build boot.img..............."
+cp scripts/mkbootimg ../output/boot						2>/dev/null
+cd ../output/boot
+base=0x00000000
+offset=0x05000000
+tags_addr=0x04800000
+cmd_line="console=ttyHSL0,115200,n8 androidboot.hardware=g2 user_debug=31 msm_rtb.filter=0x0"
+./mkbootimg --kernel zImage --ramdisk ramdisk.gz --cmdline "$cmd_line" --base $base --offset $offset --tags-addr $tags_addr --pagesize 2048 --dt dt.img -o newboot.img
+mv newboot.img ../boot.img
+
+# cleanup all temporary working files
+echo "Post build cleanup..........."
+cd ..
+rm -rf boot
+cd ..
+rm -rf lib
+
+# create the flashable zip file from the contents of the output directory
+echo "Make flashable zip..........."
+cd output
+zip -r LG_G2_D802_StockMOD_Kernel.zip * 					>/dev/null
+
+
+

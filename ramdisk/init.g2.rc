@@ -1,0 +1,136 @@
+# Copyright (c) 2009-2012, Code Aurora Forum. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Code Aurora nor
+#       the names of its contributors may be used to endorse or promote
+#       products derived from this software without specific prior written
+#       permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NON-INFRINGEMENT ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+import /init.galbi.rc
+import /init.lge.rc
+import /init.g2_product.rc
+
+# LGE_CHANGE_S [blue.park@lge.com] <For Blue Error Handler V1.4>
+service blue_log /system/bin/logcat -v threadtime -f /data/dontpanic/bluelog.txt -b main -b system -b events -n 1 -r 8192 -l
+        class main
+	user root
+	group system
+        disabled
+
+# Set Blue Error Handler Level for each model's Q Event.
+on property:ro.build.type=userdebug
+        setrlimit 4 -1 -1
+        write /proc/sys/kernel/core_uses_pid 1
+        write /proc/sys/kernel/core_pattern "|/system/bin/blue_error_report -o %e.%p"
+        write /proc/sys/fs/suid_dumpable 1
+        write /proc/sys/kernel/dmesg_restrict 0
+        start blue_log
+
+on property:ro.blue_handler.level=1
+        setrlimit 4 -1 -1
+        write /proc/sys/kernel/core_uses_pid 1
+        write /proc/sys/kernel/core_pattern "|/system/bin/blue_error_report -o %e.%p"
+        write /proc/sys/fs/suid_dumpable 1
+        write /proc/sys/kernel/dmesg_restrict 0
+        start blue_log
+
+on property:ro.blue_handler.level=2 # Kernel Log Enable & No Coredump
+        write /proc/sys/kernel/dmesg_restrict 0
+        start blue_log
+
+on property:ro.blue_handler.level=3 # Only Support basic functionality.(popup & debugging info)
+        write /proc/sys/kernel/dmesg_restrict 0
+# LGE_CHANGE_E [blue.park@lge.com] <For blue ErrorHander V1.4>
+
+
+# 2012.08.24 real-wifi@lge.com[wo0gi] TestMode Daemon for broadcom driver [START]
+service diagd /system/bin/diagd 
+	class late_start
+	user root
+	group radio system
+	disabled
+	oneshot
+	socket lsock_diagd stream 666
+
+#LGE_CHANGE_S[START]2012.7.16 jaeho.cho@lge.com add usbdebug manager
+service usbdebug-manager /system/bin/usbdebug-manager
+    class late_start
+    user root
+    disabled
+    oneshot
+
+on usb_debug
+    start usbdebug-manager
+#LGE_CHANGE_E[END]2012.7.16 jaeho.cho@lge.com add usbdebug manager
+
+on property:wifi_ftm.diagd_start=1
+    start diagd
+
+on property:wifi_ftm.diagd_start=0
+    stop diagd
+# 2012.08.24 real-wifi@lge.com[wo0gi] TestMode Daemon for broadcom driver [END]
+
+# 2013.02.15 [G2_Broadcast][heri.jang@lge.com] Broadcast Service[START]
+service broadcast /system/bin/libbroadcast_server
+    class main
+    user media
+    group system audio media graphics sdcard_rw
+# 2013.02.15 [G2_Broadcast][heri.jang@lge.com] Broadcast Service [END]
+
+on property:persist.service.usb_ther=true
+on property:persist.service.usb_ther=false
+
+#LGE_CHANGE_S 2012.04 lg-msp@lge.com MTS TEAM
+	service mtsd /system/bin/mtsd
+	class late_start
+	oneshot
+	socket mtsd.port stream 660 system system
+#LGE_CHANGE_E 2012.04 lg-msp@lge.com MTS TEAM
+
+
+# 2013.03.12 [LGLINKBACKUP][hyungrok.kim@lge.com] SystemService Daemon [START]
+service bnrd /system/bin/bnrd
+        class main
+        socket bnrd stream 660 root system
+        user root
+        group system radio sdcard_rw
+# 2013.03.12 [LGLINKBACKUP][hyungrok.kim@lge.com] SystemService Daemon [END]
+
+#touch firmware upgrade on hiddenmenu
+on property:sys.lge.touchfirmware.update=1
+    write /sys/devices/virtual/input/lge_touch/firmware 1
+    setprop sys.lge.touchfirmware.update 2
+
+# bugreport is triggered by holding down volume down, volume up and power
+service bugreport /system/bin/bugmailer.sh -v
+    class main
+    disabled
+    oneshot
+
+# Begin Immersion changes(donguk.ki@lge.com)
+service immvibed /system/bin/immvibed
+    class main
+    user shell
+    group shell
+    oneshot
+# End Immersion changes
+
