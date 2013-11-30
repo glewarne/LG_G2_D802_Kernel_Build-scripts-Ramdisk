@@ -26,7 +26,7 @@ on init
 
 sysclktz 0
 
-loglevel 7
+loglevel 3
 
 # setup the global environment
     export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin
@@ -567,7 +567,7 @@ service mdnsd /system/bin/mdnsd
     oneshot
     
 #run the custom startup script
-service stockmod /system/bin/sh /init.stockmod.sh
-    class core
-    user root
-    oneshot
+# service stockmod /system/bin/sh /init.stockmod.sh
+#    class core
+#    user root
+#    oneshot
