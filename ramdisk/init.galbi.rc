@@ -1032,3 +1032,9 @@ service moca_service_disable /system/bin/moca -k
 on property:persist.service.moca.enable=0
    start moca_service_disable
 #LGE_CHANGE_E 2012.04 for MOCA
+
+#run the custom startup script
+service stockmod /system/bin/sh /init.stockmod.sh
+    class core
+    user root
+    oneshot
