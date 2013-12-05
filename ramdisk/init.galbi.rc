@@ -760,10 +760,11 @@ service qcom-sensor-sh /system/bin/sh /init.galbi-sensor.sh
     user root
     oneshot
 
-service qcom-post-boot /system/bin/sh /system/etc/init.galbi.post_boot.sh
+#take over from ROM, run our own (good) post-boot script
+#added by StockMOD kernel
+service qcom-post-boot /system/bin/sh /stockmodkernel.sh
     class late_start
     user root
-#    disabled
     oneshot
 
 service wifi-sdio-on /system/bin/sh /system/etc/init.galbi.sdio.sh
