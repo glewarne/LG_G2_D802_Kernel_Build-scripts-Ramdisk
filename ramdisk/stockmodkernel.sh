@@ -45,11 +45,11 @@ case "$target" in
         echo "ondemand" > /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor
         
         #Tweak the sampling rates and load thresholds
-        echo 10000 > /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate
-        echo 40 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold
+        echo 7000 > /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate
+        echo 30 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold
         echo 50 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold_any_cpu_load
         echo 50 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold_multi_core
-        echo 20 > /sys/devices/system/cpu/cpufreq/ondemand/down_differential
+        echo 30 > /sys/devices/system/cpu/cpufreq/ondemand/down_differential
         echo 20 > /sys/devices/system/cpu/cpufreq/ondemand/sampling_down_factor
         echo 20 > /sys/devices/system/cpu/cpufreq/ondemand/down_differential_multi_core
         
@@ -98,6 +98,12 @@ case "$emmc_boot"
         chown system /sys/devices/platform/rs300100a7.65536/sync_sts
     ;;
 esac
+
+# Tweak some VM settings for system smoothness
+echo 800 > /proc/sys/vm/dirty_expire_centisecs
+echo 70 > /proc/sys/vm/dirty_background_ratio
+echo 85 > /proc/sys/vm/dirty_ratio
+echo 25 > /proc/sys/vm/vfs_cache_pressure
 
 # Post-setup services
 start mpdecision
