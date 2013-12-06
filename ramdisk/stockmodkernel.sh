@@ -46,10 +46,10 @@ case "$target" in
         
         #Tweak the sampling rates and load thresholds
         echo 7000 > /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate
-        echo 30 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold
+        echo 35 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold
         echo 50 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold_any_cpu_load
         echo 50 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold_multi_core
-        echo 30 > /sys/devices/system/cpu/cpufreq/ondemand/down_differential
+        echo 20 > /sys/devices/system/cpu/cpufreq/ondemand/down_differential
         echo 20 > /sys/devices/system/cpu/cpufreq/ondemand/sampling_down_factor
         echo 20 > /sys/devices/system/cpu/cpufreq/ondemand/down_differential_multi_core
         
@@ -104,6 +104,9 @@ echo 800 > /proc/sys/vm/dirty_expire_centisecs
 echo 70 > /proc/sys/vm/dirty_background_ratio
 echo 85 > /proc/sys/vm/dirty_ratio
 echo 25 > /proc/sys/vm/vfs_cache_pressure
+
+# set simple GPU governor as default
+echo simple > /sys/devices/fdb00000.qcom,kgsl-3d0/kgsl/kgsl-3d0/pwrscale/trustzone/governor
 
 # Post-setup services
 start mpdecision
