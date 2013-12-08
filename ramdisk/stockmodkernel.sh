@@ -68,6 +68,13 @@ case "$target" in
         echo 300000 > /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq
         echo 300000 > /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq
         
+        #set default max fequencies, userspace apps can override this
+        #echo 2265000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+        #echo 2265000 > /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq
+        #echo 2265000 > /sys/devices/system/cpu/cpu2/cpufreq/scaling_max_freq
+        #echo 2265000 > /sys/devices/system/cpu/cpu3/cpufreq/scaling_max_freq
+        
+        
         #set grid steps
         echo 7 > /sys/devices/system/cpu/cpufreq/ondemand/middle_grid_step
         echo 40 > /sys/devices/system/cpu/cpufreq/ondemand/middle_grid_load
@@ -110,8 +117,12 @@ echo simple > /sys/devices/fdb00000.qcom,kgsl-3d0/kgsl/kgsl-3d0/pwrscale/trustzo
 
 # Post-setup services
 start mpdecision
+
+#set default readahead
 echo 256 > /sys/block/mmcblk0/bdi/read_ahead_kb
 
+# make sure our max gpu clock is set via sysfs
+echo 450000000 > /sys/class/kgsl/kgsl-3d0/max_gpuclk
 
 targetProd=`getprop ro.product.name`
 case "$targetProd" in
@@ -142,16 +153,6 @@ case "$targetProd" in
 				fi
 			;;
 esac
-
-
-#build_type=`getprop ro.build.type`
-#case "$build_type" in
-#	"userdebug" | "user")
-#		echo 1 > /sys/kernel/debug/clk/debug_suspend
-#		echo 1 > /sys/module/msm_show_resume_irq/parameters/debug_mask
-#		;;
-#esac
-
 
 lgodl_prop=`getprop persist.service.lge.odl_on`
 if [ "true" == $lgodl_prop ]; then
